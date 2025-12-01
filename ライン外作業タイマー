@@ -1,0 +1,119 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ライン外作業タイマー記録</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 16px; }
+    h1 { font-size: 18px; margin-bottom: 8px; }
+    label { display: block; margin-top: 8px; font-size: 14px; }
+    select, input, button, textarea { width: 100%; font-size: 16px; margin-top: 4px; }
+    button { padding: 8px; margin-top: 8px; }
+    #log { height: 200px; }
+    .row { margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <h1>ライン外作業タイマー記録</h1>
+
+  <label>要素作業</label>
+  <select id="task">
+    <option>部品運搬</option>
+    <option>品番確認</option>
+    <option>棚番検索</option>
+    <option>フォークリフト待ち</option>
+    <option>製品仮置き</option>
+    <option>手直し作業</option>
+    <option>社員呼び出し</option>
+  </select>
+
+  <label class="row">作業者名（任意）</label>
+  <input id="worker" type="text" placeholder="Aさん">
+
+  <div class="row">
+    <button id="startBtn" onclick="startTimer()">▶ START（計測開始）</button>
+    <button id="stopBtn" onclick="stopTimer()" disabled>■ STOP & 記録</button>
+  </div>
+
+  <div class="row">
+    <small id="status">待機中</small>
+  </div>
+
+  <label class="row">記録（このままExcelに貼り付け可）</label>
+  <textarea id="log" readonly></textarea>
+
+  <div class="row">
+    <button onclick="copyLog()">全コピー（Excel貼り付け用）</button>
+  </div>
+
+<script>
+let startTime = null;
+let currentTask = null;
+
+function formatDateTime(d) {
+  const pad = n => n.toString().padStart(2, "0");
+  return d.getFullYear() + "-" +
+         pad(d.getMonth()+1) + "-" +
+         pad(d.getDate()) + " " +
+         pad(d.getHours()) + ":" +
+         pad(d.getMinutes()) + ":" +
+         pad(d.getSeconds());
+}
+
+function formatDate(d) {
+  const pad = n => n.toString().padStart(2, "0");
+  return d.getFullYear() + "-" +
+         pad(d.getMonth()+1) + "-" +
+         pad(d.getDate());
+}
+
+function startTimer() {
+  startTime = new Date();
+  currentTask = document.getElementById("task").value;
+  document.getElementById("startBtn").disabled = true;
+  document.getElementById("stopBtn").disabled = false;
+  document.getElementById("status").textContent =
+    "計測中: " + currentTask + " ／ 開始 " + formatDateTime(startTime);
+}
+
+function stopTimer() {
+  if (!startTime) return;
+  const endTime = new Date();
+  const diffSec = Math.round((endTime - startTime) / 1000);
+  const worker = document.getElementById("worker").value || "Aさん";
+
+  const line = [
+    currentTask,
+    formatDateTime(startTime),
+    formatDateTime(endTime),
+    diffSec,
+    formatDate(endTime),
+    worker
+  ].join(",");
+
+  const logArea = document.getElementById("log");
+  if (logArea.value === "") {
+    logArea.value = "要素作業,開始時刻,終了時刻,計測秒,計測日,作業者\n";
+  }
+  logArea.value += line + "\n";
+
+  startTime = null;
+  currentTask = null;
+  document.getElementById("startBtn").disabled = false;
+  document.getElementById("stopBtn").disabled = true;
+  document.getElementById("status").textContent =
+    "記録しました: " + line;
+}
+
+function copyLog() {
+  const logArea = document.getElementById("log");
+  logArea.select();
+  document.execCommand("copy");
+  alert("コピーしました。Excelのシートに貼り付けてください。");
+}
+</script>
+
+</body>
+</html>
